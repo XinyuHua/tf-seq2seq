@@ -9,8 +9,7 @@ import random
 
 import numpy as np
 import tensorflow as tf
-
-import data_utils
+import preprocess
 
 
 class Seq2SeqModel(object):
@@ -172,7 +171,7 @@ class Seq2SeqModel(object):
               lambda x, y: seq2seq_f(x, y, False),
               softmax_loss_function=softmax_loss_function)
           tf.summary.scalar("loss", self.losses[0])
-          self.summary_op = tf.summary.merge_all_summaries()
+          self.summary_op = tf.summary.merge_all()
       print("seq2seq model variables created")
 
   def _add_train_op(self):
@@ -212,6 +211,7 @@ class Seq2SeqModel(object):
     """
     # Check if the sizes match.
     encoder_size, decoder_size = self.buckets[bucket_id]
+
     if len(encoder_inputs) != encoder_size:
       raise ValueError("Encoder length must be equal to the one in bucket,"
                        " %d != %d." % (len(encoder_inputs), encoder_size))
@@ -228,6 +228,7 @@ class Seq2SeqModel(object):
     input_feed = {}
     for l in xrange(encoder_size):
       input_feed[self.encoder_inputs[l].name] = encoder_inputs[l]
+
     for l in xrange(decoder_size):
       input_feed[self.decoder_inputs[l].name] = decoder_inputs[l]
       input_feed[self.target_weights[l].name] = target_weights[l]
@@ -278,13 +279,13 @@ class Seq2SeqModel(object):
       encoder_input, decoder_input = random.choice(data[bucket_id])
 
       # Encoder inputs are padded and then reversed.
-      encoder_pad = [data_utils.PAD_ID] * (encoder_size - len(encoder_input))
+      encoder_pad = [preprocess.PAD_ID] * (encoder_size - len(encoder_input))
       encoder_inputs.append(list(reversed(encoder_input + encoder_pad)))
 
       # Decoder inputs get an extra "GO" symbol, and are padded then.
       decoder_pad_size = decoder_size - len(decoder_input) - 1
-      decoder_inputs.append([data_utils.GO_ID] + decoder_input +
-                            [data_utils.PAD_ID] * decoder_pad_size)
+      decoder_inputs.append([preprocess.GO_ID] + decoder_input +
+                            [preprocess.PAD_ID] * decoder_pad_size)
 
     # Now we create batch-major vectors from the data selected above.
     batch_encoder_inputs, batch_decoder_inputs, batch_weights = [], [], []
@@ -308,7 +309,7 @@ class Seq2SeqModel(object):
         # The corresponding target is decoder_input shifted by 1 forward.
         if length_idx < decoder_size - 1:
           target = decoder_inputs[batch_idx][length_idx + 1]
-        if length_idx == decoder_size - 1 or target == data_utils.PAD_ID:
+        if length_idx == decoder_size - 1 or target == preprocess.PAD_ID:
           batch_weight[batch_idx] = 0.0
       batch_weights.append(batch_weight)
     return batch_encoder_inputs, batch_decoder_inputs, batch_weights

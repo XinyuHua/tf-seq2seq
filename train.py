@@ -70,8 +70,8 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-#_buckets = [(200, 20), (300, 30), (400, 40), (500,50), (1700, 60)]
-_buckets = [(200, 20), (300, 30), (400, 40)]
+_buckets = [(200, 20), (300, 30), (400, 40), (500,50), (1700, 60)]
+#_buckets = [(200, 20), (300, 30), (400, 40)]
 
 def read_data(source_path, target_path, max_size=-1):
   """Read data from source and target files and put into buckets.
@@ -164,7 +164,6 @@ def train():
             _, step_loss, _, summary = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
             step_time += (time.time() - start_time) / step_num_per_checkpoint
             loss += step_loss / step_num_per_checkpoint
-            tf.scalar_summary(summary, current_step)
             current_step += 1
 
             if current_step % 500 == 0:
